@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Deposit Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            width: 100%;
+            max-width: 1000px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ffcc00;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .deposit-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .deposit-display.active {
+            background: rgba(209, 231, 221, 0.2);
+            border: 1px solid rgba(15, 81, 50, 0.5);
+        }
+        
+        .deposit-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #4cd964;
+        }
+        
+        .status {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .add-btn {
+            background: linear-gradient(to right, #4cd964, #5ac8fa);
+            color: white;
+        }
+        
+        .add-btn:hover {
+            background: linear-gradient(to right, #44c059, #4ab8e8);
+            box-shadow: 0 6px 12px rgba(76, 217, 100, 0.4);
+        }
+        
+        .remove-btn {
+            background: linear-gradient(to right, #ff3b30, #ff9500);
+            color: white;
+        }
+        
+        .remove-btn:hover {
+            background: linear-gradient(to right, #e0352b, #e68500);
+            box-shadow: 0 6px 12px rgba(255, 59, 48, 0.4);
+        }
+        
+        .update-btn {
+            background: linear-gradient(to right, #007aff, #5856d6);
+            color: white;
+        }
+        
+        .update-btn:hover {
+            background: linear-gradient(to right, #0069d9, #4d4bc9);
+            box-shadow: 0 6px 12px rgba(0, 122, 255, 0.4);
+        }
+        
+        .firebase-path {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            text-align: center;
+            word-break: break-all;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.4s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .panel {
+                max-width: 100%;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Firebase Deposit Control</h1>
+        <p class="subtitle">Manage your deposit data in real-time</p>
+    </header>
+    
+    <div class="container">
+        <!-- LZR Deposit Panel -->
+        <div class="panel">
+            <h2 class="panel-title">LZR Deposit</h2>
+            <div class="deposit-display" id="lzrDeposit">
+                <p class="status">Status: <span id="lzrStatus">Loading...</span></p>
+                <div class="deposit-value" id="lzrValue">-</div>
+                <p>LZR Active</p>
+            </div>
+            <div class="button-group">
+                <button class="add-btn" id="lzrAddBtn">
+                    <span>LZR ACTIVE</span>
+                </button>
+                <button class="remove-btn" id="lzrRemoveBtn">
+                    <span>REMOVE LZR</span>
+                </button>
+            </div>
+            <div class="firebase-path">
+                Path: deposit/deposit/xl
+            </div>
+        </div>
+        
+        <!-- Amount Panel -->
+        <div class="panel">
+            <h2 class="panel-title">Deposit Amount</h2>
+            <div class="deposit-display" id="amountDeposit">
+                <p class="status">Status: <span id="amountStatus">Loading...</span></p>
+                <div class="deposit-value" id="amountValue">-</div>
+                <p>Amount Value</p>
+            </div>
+            <div class="button-group">
+                <button class="add-btn" id="amountAddBtn">
+                    <span>ADD AMOUNT</span>
+                </button>
+                <button class="update-btn" id="amountUpdateBtn">
+                    <span>UPDATE AMOUNT</span>
+                </button>
+                <button class="remove-btn" id="amountRemoveBtn">
+                    <span>REMOVE AMOUNT</span>
+                </button>
+            </div>
+            <div class="firebase-path">
+                Path: deposit/deposit/amt
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        Operation completed successfully!
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <script>
+        // ===== Firebase Config =====
+        const firebaseConfig = {
+            databaseURL: "https://you-ga-f1329-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // ===== Refs for different deposit paths =====
+        const lzrRef = database.ref("deposit/deposit/xl");
+        const amountRef = database.ref("deposit/deposit/amt");
+        
+        // ===== UI Elements =====
+        // LZR Elements
+        const lzrDeposit = document.getElementById('lzrDeposit');
+        const lzrStatus = document.getElementById('lzrStatus');
+        const lzrValue = document.getElementById('lzrValue');
+        const lzrAddBtn = document.getElementById('lzrAddBtn');
+        const lzrRemoveBtn = document.getElementById('lzrRemoveBtn');
+        
+        // Amount Elements
+        const amountDeposit = document.getElementById('amountDeposit');
+        const amountStatus = document.getElementById('amountStatus');
+        const amountValue = document.getElementById('amountValue');
+        const amountAddBtn = document.getElementById('amountAddBtn');
+        const amountUpdateBtn = document.getElementById('amountUpdateBtn');
+        const amountRemoveBtn = document.getElementById('amountRemoveBtn');
+        
+        // Notification
+        const notification = document.getElementById('notification');
+        
+        // ===== Helper Functions =====
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // ===== LZR Deposit Functions =====
+        // Initial check for LZR deposit
+        lzrRef.once('value').then(snapshot => {
+            if(snapshot.exists()) {
+                lzrDeposit.classList.add('active');
+                lzrStatus.textContent = 'Active';
+                lzrValue.textContent = snapshot.val();
+            } else {
+                lzrDeposit.classList.remove('active');
+                lzrStatus.textContent = 'Inactive';
+                lzrValue.textContent = '-';
+            }
+        }).catch(error => {
+            lzrDeposit.classList.remove('active');
+            lzrStatus.textContent = 'Error';
+            console.error(error);
+        });
+        
+        // Real-time listener for LZR deposit
+        lzrRef.on('value', snapshot => {
+            if(snapshot.exists()) {
+                lzrDeposit.classList.add('active');
+                lzrStatus.textContent = 'Active';
+                lzrValue.textContent = snapshot.val();
+            } else {
+                lzrDeposit.classList.remove('active');
+                lzrStatus.textContent = 'Inactive';
+                lzrValue.textContent = '-';
+            }
+        });
+        
+        // Add LZR deposit
+        lzrAddBtn.addEventListener('click', () => {
+            lzrRef.set("100").then(() => {
+                showNotification("LZR Deposit added successfully!");
+            });
+        });
+        
+        // Remove LZR deposit
+        lzrRemoveBtn.addEventListener('click', () => {
+            lzrRef.remove().then(() => {
+                showNotification("LZR Deposit removed successfully!");
+            });
+        });
+        
+        // ===== Amount Deposit Functions =====
+        // Real-time listener for amount deposit
+        amountRef.on('value', snapshot => {
+            if(snapshot.exists()) {
+                amountDeposit.classList.add('active');
+                amountStatus.textContent = 'Active';
+                amountValue.textContent = snapshot.val();
+            } else {
+                amountDeposit.classList.remove('active');
+                amountStatus.textContent = 'Inactive';
+                amountValue.textContent = '-';
+            }
+        });
+        
+        // Add amount deposit
+        amountAddBtn.addEventListener('click', () => {
+            const newValue = prompt("Enter deposit amount:");
+            if (newValue !== null && newValue.trim() !== "") {
+                amountRef.set(newValue).then(() => {
+                    showNotification("Amount added successfully!");
+                });
+            }
+        });
+        
+        // Update amount deposit
+        amountUpdateBtn.addEventListener('click', () => {
+            const newValue = prompt("Enter new deposit amount:");
+            if (newValue !== null && newValue.trim() !== "") {
+                amountRef.set(newValue).then(() => {
+                    showNotification("Amount updated successfully!");
+                });
+            }
+        });
+        
+        // Remove amount deposit
+        amountRemoveBtn.addEventListener('click', () => {
+            amountRef.remove().then(() => {
+                showNotification("Amount removed successfully!");
+            });
+        });
+    </script>
+</body>
+</html>
